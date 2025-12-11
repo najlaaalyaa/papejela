@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 
 # Page config
 st.set_page_config(
@@ -11,6 +12,12 @@ st.set_page_config(
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+# Floating icons
+st.markdown("""
+<div class="floating-icon">🎵</div>
+<div class="floating-icon2">✨</div>
+""", unsafe_allow_html=True)
+
 # --- Sidebar ---
 with st.sidebar:
     st.markdown("<div class='sidebar-title'>🎧 VibeChecker</div>", unsafe_allow_html=True)
@@ -19,8 +26,8 @@ with st.sidebar:
     st.markdown("### How to Use")
     st.markdown("""
     1. Select a mood  
-    2. View recommendations  
-    3. Click to listen  
+    2. Let me curate  
+    3. Enjoy the playlist  
     """)
 
     st.write("---")
@@ -57,34 +64,48 @@ user_mood = st.text_input(" ", placeholder="Type your mood here…")
 
 # ---- Recommendation Logic ----
 def show_recs(mood):
+    # Loading animation
+    with st.spinner(f"Curating {mood} vibes… 🎶"):
+        time.sleep(1.5)
+
     st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
 
-    # Sample song cards — replace with your real recommendations
     recs = [
         ("Soft Skies", "Eden Waves", "https://youtu.be/xxxx"),
         ("Golden Hour", "JVKE", "https://youtu.be/yxW5yuzVi8w"),
         ("Peaceful Mind", "Calm Collective", "https://youtu.be/xxxx")
     ]
 
+    # Display recommendation cards
     for title, artist, link in recs:
-        with st.container():
-            st.markdown(
-                f"""
-                <div class='card'>
-                    <div class='card-left'>
-                        <div class='album-placeholder'></div>
-                    </div>
-                    <div class='card-right'>
-                        <div class='song-title'>{title}</div>
-                        <div class='song-artist'>{artist}</div>
-                        <a href='{link}' target='_blank' class='listen-btn'>Listen</a>
-                    </div>
+        st.markdown(
+            f"""
+            <div class='card fade-in'>
+                <div class='card-left'>
+                    <div class='album-placeholder'></div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+                <div class='card-right'>
+                    <div class='song-title'>{title}</div>
+                    <div class='song-artist'>{artist}</div>
+                    <a href='{link}' target='_blank' class='listen-btn'>Listen</a>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # Now playing bar
+    st.markdown(
+        f"""
+        <div class='now-playing'>
+            <span class='np-label'>Now Playing:</span> {recs[0][0]} — {recs[0][1]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
+# Trigger events
 if energetic:
     show_recs("Energetic")
 elif melancholy:
