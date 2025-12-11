@@ -1,6 +1,5 @@
 import streamlit as st
 import time
-import google.generativeai as genai
 
 # ========= API CONFIG =========
 api_key = "AIzaSyBxMqAMs-26dIn699aG6IsUVMZxsoqIW2o"
