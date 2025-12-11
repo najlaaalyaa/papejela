@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import random
 
 # Page config
 st.set_page_config(
@@ -9,6 +10,7 @@ st.set_page_config(
 )
 
 # Load custom CSS
+# Ensure you have a style.css file in the same directory
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
@@ -35,7 +37,7 @@ with st.sidebar:
     st.markdown("- Melancholy\n- Chill\n- Energetic")
 
     st.write("---")
-    st.button("🎲 Surprise Me")
+    surprise_me = st.button("🎲 Surprise Me")
 
 # --- Main Layout ---
 st.markdown("<h1 class='title'>VibeChecker</h1>", unsafe_allow_html=True)
@@ -62,19 +64,48 @@ st.write("")
 # Text Input Mood
 user_mood = st.text_input(" ", placeholder="Type your mood here…")
 
+# ---- Recommendation Data (Real Songs) ----
+# Format: (Title, Artist/Channel, YouTube URL)
+mood_data = {
+    "Energetic": [
+        ("Houdini", "Dua Lipa", "https://www.youtube.com/watch?v=suAR1PYFNYA"),
+        ("Espresso", "Sabrina Carpenter", "https://www.youtube.com/watch?v=51zjlMhdSTE"),
+        ("2024 Hits Mashup", "Logan Alexandra", "https://www.youtube.com/watch?v=29zyVX_iyHc")
+    ],
+    "Melancholy": [
+        ("What Was I Made For?", "Billie Eilish", "https://www.youtube.com/watch?v=cW8VLC9nnTo"),
+        ("Sad Songs Playlist", "Love Letter", "https://www.youtube.com/watch?v=mh2265QqV-Y"),
+        ("Vampire (Official)", "Olivia Rodrigo", "https://www.youtube.com/watch?v=RlPNh_9IK0M")
+    ],
+    "Chill": [
+        ("Good Days", "SZA", "https://www.youtube.com/watch?v=2p3zZoraK9g"),
+        ("Tadow", "Masego & FKJ", "https://www.youtube.com/watch?v=hC8CH0Z3L54"),
+        ("Lofi Pop 2024", "Hi-lofi", "https://www.youtube.com/watch?v=_sT0akYdxDQ")
+    ],
+    "Heartbroken": [
+        ("you broke me first", "Tate McRae", "https://www.youtube.com/watch?v=QXzC2eiHBG8"),
+        ("Residuals", "Chris Brown", "https://www.youtube.com/watch?v=46p-IxAVJ74"),
+        ("Someone You Loved", "Lewis Capaldi", "https://www.youtube.com/watch?v=bCuhuePlP8o")
+    ]
+}
+
 # ---- Recommendation Logic ----
 def show_recs(mood):
+    # Normalize mood string for dictionary lookup
+    mood_key = mood.title() if mood.title() in mood_data else "Chill"  # Default to Chill if unknown
+    
+    # Specific override for user text input if it matches our keys
+    if mood.title() in mood_data:
+        recs = mood_data[mood.title()]
+    else:
+        # Fallback/Generic for custom text inputs
+        recs = mood_data["Chill"] 
+
     # Loading animation
     with st.spinner(f"Curating {mood} vibes… 🎶"):
-        time.sleep(1.5)
+        time.sleep(1.0) # Slightly faster
 
     st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
-
-    recs = [
-        ("Soft Skies", "Eden Waves", "https://youtu.be/xxxx"),
-        ("Golden Hour", "JVKE", "https://youtu.be/yxW5yuzVi8w"),
-        ("Peaceful Mind", "Calm Collective", "https://youtu.be/xxxx")
-    ]
 
     # Display recommendation cards
     for title, artist, link in recs:
@@ -82,19 +113,19 @@ def show_recs(mood):
             f"""
             <div class='card fade-in'>
                 <div class='card-left'>
-                    <div class='album-placeholder'></div>
+                    <div class='album-placeholder'>💿</div>
                 </div>
                 <div class='card-right'>
                     <div class='song-title'>{title}</div>
                     <div class='song-artist'>{artist}</div>
-                    <a href='{link}' target='_blank' class='listen-btn'>Listen</a>
+                    <a href='{link}' target='_blank' class='listen-btn'>Listen on YouTube</a>
                 </div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Now playing bar
+    # Now playing bar (Shows the first song in the list)
     st.markdown(
         f"""
         <div class='now-playing'>
@@ -104,8 +135,8 @@ def show_recs(mood):
         unsafe_allow_html=True
     )
 
+# ---- Event Handling ----
 
-# Trigger events
 if energetic:
     show_recs("Energetic")
 elif melancholy:
@@ -114,5 +145,11 @@ elif chill:
     show_recs("Chill")
 elif heartbroken:
     show_recs("Heartbroken")
+elif surprise_me:
+    # Pick a random mood from the keys
+    random_mood = random.choice(list(mood_data.keys()))
+    show_recs(random_mood)
 elif user_mood:
-    show_recs(user_mood.title())
+    # If the user types a mood we know, show it. Otherwise defaults to Chill logic above.
+    # You could expand this with an API call in a real app!
+    show_recs(user_mood)
