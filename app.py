@@ -68,7 +68,7 @@ user_mood = st.text_input(" ", placeholder="Type your mood here…")
 # ---- Recommendation Logic ----
 def get_recommendations(mood):
     # Configure Gemini API
-    genai.configure(api_key=st.secrets["gemini_api_key"])
+    genai.configure(api_key=st.secrets["AIzaSyDWyAp3y6GsWfeQm3XSMit0UmRdQJAmJK0"])
     model = genai.GenerativeModel('gemini-1.5-flash')  # Use the appropriate model
     
     # Prompt to generate song recommendations
