@@ -1,7 +1,12 @@
 import streamlit as st
 import time
 import random
-import google.generativeai as genai
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    st.error("Missing required package: google-generativeai. Please install it via pip or add to requirements.txt.")
+    st.stop()
 
 # Page config
 st.set_page_config(
@@ -12,8 +17,11 @@ st.set_page_config(
 
 # Load custom CSS
 # Ensure you have a style.css file in the same directory
-with open("style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+try:
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+except FileNotFoundError:
+    st.warning("style.css not found. Skipping custom styles.")
 
 # Floating icons
 st.markdown("""
