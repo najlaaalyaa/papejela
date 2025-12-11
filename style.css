@@ -1,15 +1,37 @@
+/* IMPORT FONTS */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
 /* Background */
 body {
     background-color: #F5F4F0 !important;
+    font-family: 'Inter', sans-serif;
 }
 
-/* Title */
+/* Floating icons */
+.floating-icon, .floating-icon2 {
+    position: fixed;
+    font-size: 28px;
+    opacity: 0.18;
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-icon { top: 20%; left: 8%; }
+.floating-icon2 { bottom: 15%; right: 10%; }
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Titles */
 .title {
     text-align: center;
     font-family: 'Playfair Display', serif;
     font-size: 48px;
     color: #323232;
     margin-top: 30px;
+    animation: fadeIn 1s ease-in-out;
 }
 
 .subtitle {
@@ -17,6 +39,17 @@ body {
     font-size: 18px;
     color: #6E6E6E;
     margin-top: -10px;
+    animation: fadeIn 1.4s ease-in-out;
+}
+
+/* Fade animation */
+.fade-in {
+    animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Sidebar */
@@ -32,7 +65,7 @@ body {
     margin-top: 0px;
 }
 
-/* Button styling */
+/* Buttons */
 button, .stButton>button {
     background-color: #F7F6F2 !important;
     border: 1px solid #C1A36E !important;
@@ -40,7 +73,7 @@ button, .stButton>button {
     padding: 10px 5px;
     border-radius: 10px;
     font-size: 16px;
-    transition: 0.2s;
+    transition: 0.25s ease;
 }
 
 button:hover {
@@ -49,7 +82,7 @@ button:hover {
     transform: translateY(-2px);
 }
 
-/* Card styling */
+/* Song Cards */
 .card {
     background: #FFFFFF;
     border: 1px solid #E7E7E7;
@@ -59,8 +92,15 @@ button:hover {
     display: flex;
     gap: 15px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: 0.3s;
 }
 
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.07);
+}
+
+/* Album placeholder */
 .album-placeholder {
     width: 70px;
     height: 70px;
@@ -68,10 +108,12 @@ button:hover {
     border-radius: 8px;
 }
 
+/* Song text */
 .song-title {
     font-size: 18px;
     font-weight: bold;
     color: #323232;
+    font-family: 'Inter';
 }
 
 .song-artist {
@@ -80,6 +122,7 @@ button:hover {
     margin-bottom: 8px;
 }
 
+/* Listen Button */
 .listen-btn {
     background-color: transparent;
     border: 1px solid #C1A36E;
@@ -100,4 +143,29 @@ button:hover {
     font-family: 'Playfair Display', serif;
     color: #323232;
     margin-top: 30px;
+}
+
+/* NOW PLAYING bar */
+.now-playing {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #323232;
+    color: white;
+    padding: 12px 18px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideUp 0.6s ease;
+}
+
+.np-label {
+    font-weight: bold;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
