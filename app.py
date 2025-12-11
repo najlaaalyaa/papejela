@@ -79,7 +79,7 @@ st.markdown("""
 
 # --- 4. API SETUP ---
 try:
-    api_key = st.secrets["AIzaSyDWyAp3y6GsWfeQm3XSMit0UmRdQJAmJK0"]
+    api_key = "AIzaSyDWyAp3y6GsWfeQm3XSMit0UmRdQJAmJK0"
 except:
     st.error("⚠️ API Key missing! Check your Secrets.")
     st.stop()
