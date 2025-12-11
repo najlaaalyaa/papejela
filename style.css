@@ -1,171 +1,170 @@
-/* IMPORT FONTS */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+import streamlit as st
+import time
+import google.generativeai as genai
 
-/* Background */
-body {
-    background-color: #F5F4F0 !important;
-    font-family: 'Inter', sans-serif;
-}
+# ========= API CONFIG =========
+api_key = "YOUR_API_KEY_HERE"
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-/* Floating icons */
-.floating-icon, .floating-icon2 {
-    position: fixed;
-    font-size: 28px;
-    opacity: 0.18;
-    animation: float 6s ease-in-out infinite;
-}
+# ========= STREAMLIT PAGE CONFIG =========
+st.set_page_config(
+    page_title="VibeChecker",
+    page_icon="🎵",
+    layout="wide"
+)
 
-.floating-icon { top: 20%; left: 8%; }
-.floating-icon2 { bottom: 15%; right: 10%; }
+# Load custom CSS
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
-    100% { transform: translateY(0px); }
-}
+# Floating icons
+st.markdown("""
+<div class="floating-icon">🎵</div>
+<div class="floating-icon2">✨</div>
+""", unsafe_allow_html=True)
 
-/* Titles */
-.title {
-    text-align: center;
-    font-family: 'Playfair Display', serif;
-    font-size: 48px;
-    color: #323232;
-    margin-top: 30px;
-    animation: fadeIn 1s ease-in-out;
-}
+# --- Sidebar ---
+with st.sidebar:
+    st.markdown("<div class='sidebar-title'>🎧 VibeChecker</div>", unsafe_allow_html=True)
+    st.markdown("<p class='sidebar-sub'>Your elegant AI music curator.</p>", unsafe_allow_html=True)
 
-.subtitle {
-    text-align: center;
-    font-size: 18px;
-    color: #6E6E6E;
-    margin-top: -10px;
-    animation: fadeIn 1.4s ease-in-out;
-}
+    st.markdown("### How to Use")
+    st.markdown("""
+    1. Select a mood  
+    2. Let me curate  
+    3. Enjoy the playlist  
+    """)
 
-/* Fade animation */
-.fade-in {
-    animation: fadeIn 1s ease-in-out;
-}
+    st.write("---")
+    st.markdown("### Past Moods")
+    st.markdown("- Melancholy\n- Chill\n- Energetic")
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    st.write("---")
+    st.button("🎲 Surprise Me")
 
-/* Sidebar */
-.sidebar-title {
-    font-size: 28px;
-    font-family: 'Playfair Display', serif;
-    margin-bottom: -10px;
-}
+# --- Main Layout ---
+st.markdown("<h1 class='title'>VibeChecker</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>Your Personal Mood-Based Music Curator</p>", unsafe_allow_html=True)
 
-.sidebar-sub {
-    font-size: 14px;
-    color: #777;
-    margin-top: 0px;
-}
+st.write("")
+st.write("")
 
-/* Buttons */
-button, .stButton>button {
-    background-color: #F7F6F2 !important;
-    border: 1px solid #C1A36E !important;
-    color: #323232 !important;
-    padding: 10px 5px;
-    border-radius: 10px;
-    font-size: 16px;
-    transition: 0.25s ease;
-}
+# Mood Buttons Row
+col1, col2, col3, col4 = st.columns(4)
 
-button:hover {
-    background-color: #f0ece3 !important;
-    border-color: #b2905d !important;
-    transform: translateY(-2px);
-}
+with col1:
+    energetic = st.button("⚡ Energetic", key="energetic", use_container_width=True)
+with col2:
+    melancholy = st.button("🟣 Melancholy", key="melancholy", use_container_width=True)
+with col3:
+    chill = st.button("🧘 Chill", key="chill", use_container_width=True)
+with col4:
+    heartbroken = st.button("💔 Heartbroken", key="heartbroken", use_container_width=True)
 
-/* Song Cards */
-.card {
-    background: #FFFFFF;
-    border: 1px solid #E7E7E7;
-    padding: 18px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    display: flex;
-    gap: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    transition: 0.3s;
-}
+st.write("")
+st.write("")
 
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.07);
-}
+# Text Input Mood
+user_mood = st.text_input(" ", placeholder="Type your mood here…")
 
-/* Album placeholder */
-.album-placeholder {
-    width: 70px;
-    height: 70px;
-    background: #DDD;
-    border-radius: 8px;
-}
+# ========= AI MUSIC GENERATOR =========
+def generate_dynamic_playlist(mood):
 
-/* Song text */
-.song-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #323232;
-    font-family: 'Inter';
-}
+    prompt = f"""
+    The user is feeling: {mood}
 
-.song-artist {
-    color: #777;
-    font-size: 14px;
-    margin-bottom: 8px;
-}
+    Recommend 5 songs in this format:
 
-/* Listen Button */
-.listen-btn {
-    background-color: transparent;
-    border: 1px solid #C1A36E;
-    padding: 6px 12px;
-    border-radius: 8px;
-    color: #C1A36E;
-    text-decoration: none;
-    transition: 0.2s;
-}
+    1. Song Title - Artist
+       https://www.youtube.com/results?search_query=Song+Title+Artist
+    """
 
-.listen-btn:hover {
-    background-color: #F2ECE1;
-}
+    try:
+        response = model.generate_content(prompt).text
+        return response
+    except:
+        return None
 
-/* Section Title */
-.section-title {
-    font-size: 26px;
-    font-family: 'Playfair Display', serif;
-    color: #323232;
-    margin-top: 30px;
-}
+# ========= FORMATTING AI RESULT INTO CARDS =========
+def show_recs(mood):
 
-/* NOW PLAYING bar */
-.now-playing {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #323232;
-    color: white;
-    padding: 12px 18px;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: slideUp 0.6s ease;
-}
+    with st.spinner(f"Curating {mood} vibes… 🎶"):
+        time.sleep(1.3)
+        raw_output = generate_dynamic_playlist(mood)
 
-.np-label {
-    font-weight: bold;
-}
+    if not raw_output:
+        st.error("Failed to fetch recommendations.")
+        return
 
-@keyframes slideUp {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
+    st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
+
+    # Parse AI results
+    lines = raw_output.split("\n")
+    cleaned = [l.strip() for l in lines if l.strip() != ""]
+
+    # Extract songs formatted like:
+    # "1. Song - Artist"
+    # "https://youtube..."
+    songs = []
+    i = 0
+    while i < len(cleaned):
+        if cleaned[i][0].isdigit() and "." in cleaned[i]:
+            try:
+                title_artist = cleaned[i].split(". ",1)[1]
+                link = cleaned[i+1]
+                songs.append((title_artist, link))
+                i += 2
+            except:
+                i += 1
+        else:
+            i += 1
+
+    # Display cards
+    for item in songs:
+        title_artist = item[0]
+        link = item[1]
+
+        try:
+            title, artist = title_artist.split(" - ", 1)
+        except:
+            title = title_artist
+            artist = "Artist"
+
+        st.markdown(
+            f"""
+            <div class='card fade-in'>
+                <div class='card-left'>
+                    <div class='album-placeholder'></div>
+                </div>
+                <div class='card-right'>
+                    <div class='song-title'>{title}</div>
+                    <div class='song-artist'>{artist}</div>
+                    <a href='{link}' target='_blank' class='listen-btn'>Listen</a>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # Now playing bar
+    st.markdown(
+        f"""
+        <div class='now-playing'>
+            <span class='np-label'>Now Playing:</span> {songs[0][0]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ========= TRIGGERS =========
+if energetic:
+    show_recs("Energetic")
+elif melancholy:
+    show_recs("Melancholy")
+elif chill:
+    show_recs("Chill")
+elif heartbroken:
+    show_recs("Heartbroken")
+elif user_mood.strip() != "":
+    show_recs(user_mood.title())
