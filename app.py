@@ -1,18 +1,35 @@
 import streamlit as st
 import time
 import random
+import google.generativeai as genai
 
-# Page config
+# =========================
+# PAGE CONFIG
+# =========================
 st.set_page_config(
     page_title="VibeChecker",
     page_icon="🎵",
     layout="wide"
 )
 
-# Load custom CSS
-# Ensure you have a style.css file in the same directory
-with open("style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# =========================
+# GEMINI CONFIG
+# =========================
+# Put your Gemini API key in .streamlit/secrets.toml as:
+# GEMINI_API_KEY = "your_key_here"
+if "GEMINI_API_KEY" not in st.secrets:
+    st.error("❌ GEMINI_API_KEY not found in Streamlit secrets. Please add it before running.")
+else:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+# =========================
+# LOAD CUSTOM CSS
+# =========================
+try:
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+except FileNotFoundError:
+    st.warning("⚠️ style.css not found. Create one in the same folder for full styling.")
 
 # Floating icons
 st.markdown("""
@@ -20,33 +37,39 @@ st.markdown("""
 <div class="floating-icon2">✨</div>
 """, unsafe_allow_html=True)
 
-# --- Sidebar ---
+# =========================
+# SIDEBAR
+# =========================
 with st.sidebar:
     st.markdown("<div class='sidebar-title'>🎧 VibeChecker</div>", unsafe_allow_html=True)
     st.markdown("<p class='sidebar-sub'>Your elegant AI music curator.</p>", unsafe_allow_html=True)
 
     st.markdown("### How to Use")
     st.markdown("""
-    1. Select a mood  
-    2. Let me curate  
-    3. Enjoy the playlist  
+    1. Tell me how you feel  
+    2. I’ll understand your mood  
+    3. I’ll curate songs for you 🎶  
     """)
 
     st.write("---")
-    st.markdown("### Past Moods")
-    st.markdown("- Melancholy\n- Chill\n- Energetic")
+    st.markdown("### Quick Moods")
+    st.markdown("- Energetic\n- Chill\n- Melancholy\n- Heartbroken")
 
     st.write("---")
     surprise_me = st.button("🎲 Surprise Me")
 
-# --- Main Layout ---
+# =========================
+# MAIN TITLE
+# =========================
 st.markdown("<h1 class='title'>VibeChecker</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Your Personal Mood-Based Music Curator</p>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>Your AI Mood-Based Music Curator</p>", unsafe_allow_html=True)
 
 st.write("")
 st.write("")
 
-# Mood Buttons Row
+# =========================
+# MOOD BUTTONS
+# =========================
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -61,71 +84,139 @@ with col4:
 st.write("")
 st.write("")
 
-# Text Input Mood
-user_mood = st.text_input(" ", placeholder="Type your mood here…")
+# =========================
+# USER MOOD INPUT
+# =========================
+user_mood = st.text_input(" ", placeholder="Tell me how you feel… (e.g. 'anxious but hopeful')")
 
-# ---- Recommendation Data (Real Songs) ----
-# Format: (Title, Artist/Channel, YouTube URL)
-mood_data = {
-    "Energetic": [
-        ("Houdini", "Dua Lipa", "https://www.youtube.com/watch?v=suAR1PYFNYA"),
-        ("Espresso", "Sabrina Carpenter", "https://www.youtube.com/watch?v=51zjlMhdSTE"),
-        ("2024 Hits Mashup", "Logan Alexandra", "https://www.youtube.com/watch?v=29zyVX_iyHc")
-    ],
-    "Melancholy": [
-        ("What Was I Made For?", "Billie Eilish", "https://www.youtube.com/watch?v=cW8VLC9nnTo"),
-        ("Sad Songs Playlist", "Love Letter", "https://www.youtube.com/watch?v=mh2265QqV-Y"),
-        ("Vampire (Official)", "Olivia Rodrigo", "https://www.youtube.com/watch?v=RlPNh_9IK0M")
-    ],
-    "Chill": [
-        ("Good Days", "SZA", "https://www.youtube.com/watch?v=2p3zZoraK9g"),
-        ("Tadow", "Masego & FKJ", "https://www.youtube.com/watch?v=hC8CH0Z3L54"),
-        ("Lofi Pop 2024", "Hi-lofi", "https://www.youtube.com/watch?v=_sT0akYdxDQ")
-    ],
-    "Heartbroken": [
-        ("you broke me first", "Tate McRae", "https://www.youtube.com/watch?v=QXzC2eiHBG8"),
-        ("Residuals", "Chris Brown", "https://www.youtube.com/watch?v=46p-IxAVJ74"),
-        ("Someone You Loved", "Lewis Capaldi", "https://www.youtube.com/watch?v=bCuhuePlP8o")
-    ]
-}
+# =========================
+# GEMINI HELPERS
+# =========================
 
-# ---- Recommendation Logic ----
-def show_recs(mood):
-    # Normalize mood string for dictionary lookup
-    mood_key = mood.title() if mood.title() in mood_data else "Chill"  # Default to Chill if unknown
-    
-    # Specific override for user text input if it matches our keys
-    if mood.title() in mood_data:
-        recs = mood_data[mood.title()]
-    else:
-        # Fallback/Generic for custom text inputs
-        recs = mood_data["Chill"] 
+def get_model():
+    if "GEMINI_API_KEY" not in st.secrets:
+        return None
+    return genai.GenerativeModel("gemini-pro")
 
-    # Loading animation
-    with st.spinner(f"Curating {mood} vibes… 🎶"):
-        time.sleep(1.0) # Slightly faster
+def validate_mood_input(user_text: str) -> bool:
+    """
+    Uses Gemini to check if the user is expressing an emotion or mood.
+    Returns True if mood-related, False if off-topic.
+    """
+    model = get_model()
+    if model is None:
+        return False
 
-    st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
+    prompt = f"""
+    The user said: "{user_text}"
 
-    # Display recommendation cards
+    Your task:
+    - Decide if this text is describing how the user feels (an emotion, mood, or state of mind).
+    - Reply ONLY with "YES" if it is clearly a mood/feeling.
+    - Reply ONLY with "NO" if it is a question, a request, random text, technical issue, or anything not describing their emotional state.
+
+    Examples:
+    - "i feel sad" → YES
+    - "i'm bored" → YES
+    - "i feel energetic today" → YES
+    - "lonely but hopeful" → YES
+    - "what is 5+5?" → NO
+    - "how to cook rice?" → NO
+    - "my streamlit app is broken" → NO
+    - "open the door" → NO
+    - "i like cats" → NO
+    """
+
+    try:
+        response = model.generate_content(prompt)
+        text = response.text.strip().upper()
+        return text.startswith("YES")
+    except Exception as e:
+        st.error(f"Validation error: {e}")
+        return False
+
+def get_ai_recommendations(mood_text: str):
+    """
+    Uses Gemini to generate a short playlist based on mood_text.
+    Returns a list of (title, artist, link) tuples.
+    """
+    model = get_model()
+    if model is None:
+        return []
+
+    prompt = f"""
+    You are an AI music curator.
+
+    User mood description:
+    "{mood_text}"
+
+    Recommend EXACTLY 5 songs that fit this mood.
+    Use a mix of modern and classic tracks if suitable.
+
+    Format each line EXACTLY like this (no bullet points, no numbering):
+    Title - Artist - Suggested YouTube Link
+
+    If you don't know the exact link, you can invent a plausible YouTube search URL like:
+    https://www.youtube.com/results?search_query=Title+Artist
+
+    Do NOT add any extra text, only 5 lines of recommendations.
+    """
+
+    try:
+        response = model.generate_content(prompt)
+        text = response.text
+
+        lines = [line.strip() for line in text.split("\n") if "-" in line]
+        songs = []
+
+        for line in lines:
+            parts = line.split(" - ")
+            if len(parts) >= 2:
+                title = parts[0].strip()
+                artist = parts[1].strip()
+                link = parts[2].strip() if len(parts) > 2 else ""
+                songs.append((title, artist, link))
+
+        return songs[:5]
+    except Exception as e:
+        st.error(f"Error getting recommendations: {e}")
+        return []
+
+def display_playlist(mood_text: str):
+    """
+    Shows cards with recommendations for the mood_text.
+    """
+    with st.spinner(f"Curating vibes for “{mood_text}” 🎶"):
+        time.sleep(1)
+        recs = get_ai_recommendations(mood_text)
+
+    if not recs:
+        st.error("I couldn't generate music recommendations right now. Try again or change your mood description.")
+        return
+
+    st.markdown(
+        f"<h2 class='section-title'>Recommended for “{mood_text}”</h2>",
+        unsafe_allow_html=True
+    )
+
     for title, artist, link in recs:
+        btn_html = f"<a href='{link}' target='_blank' class='listen-btn'>Listen</a>" if link else ""
         st.markdown(
             f"""
             <div class='card fade-in'>
                 <div class='card-left'>
-                    <div class='album-placeholder'>💿</div>
+                    <div class='album-img-placeholder'>💿</div>
                 </div>
                 <div class='card-right'>
                     <div class='song-title'>{title}</div>
                     <div class='song-artist'>{artist}</div>
-                    <a href='{link}' target='_blank' class='listen-btn'>Listen on YouTube</a>
+                    {btn_html}
                 </div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Now playing bar (Shows the first song in the list)
     st.markdown(
         f"""
         <div class='now-playing'>
@@ -135,23 +226,32 @@ def show_recs(mood):
         unsafe_allow_html=True
     )
 
-# ---- Event Handling ----
+# =========================
+# EVENT HANDLING
+# =========================
 
+preset_moods = {
+    "energetic": "high energy upbeat hype mood, feel like dancing or working out",
+    "melancholy": "sad, reflective, slightly empty but calm",
+    "chill": "relaxed, peaceful, want calm background vibes",
+    "heartbroken": "broken heart, breakup pain, missing someone deeply"
+}
+
+# 1. Button moods (always valid)
 if energetic:
-    show_recs("Energetic")
+    display_playlist(preset_moods["energetic"])
 elif melancholy:
-    show_recs("Melancholy")
+    display_playlist(preset_moods["melancholy"])
 elif chill:
-    show_recs("Chill")
+    display_playlist(preset_moods["chill"])
 elif heartbroken:
-    show_recs("Heartbroken")
+    display_playlist(preset_moods["heartbroken"])
 elif surprise_me:
-    # Pick a random mood from the keys
-    random_mood = random.choice(list(mood_data.keys()))
-    show_recs(random_mood)
-elif user_mood:
-    # If the user types a mood we know, show it. Otherwise defaults to Chill logic above.
-    # You could expand this with an API call in a real app!
-    show_recs(user_mood)
-
-
+    random_mood = random.choice(list(preset_moods.values()))
+    display_playlist(random_mood)
+# 2. Free text mood (must pass mood validation)
+elif user_mood.strip():
+    if validate_mood_input(user_mood.strip()):
+        display_playlist(user_mood.strip())
+    else:
+        st.warning("✨ I can recommend music for you — but first tell me how you feel emotionally (e.g. 'sad but hopeful', 'stressed', 'super happy').")
