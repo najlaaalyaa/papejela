@@ -1,0 +1,103 @@
+/* Background */
+body {
+    background-color: #F5F4F0 !important;
+}
+
+/* Title */
+.title {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    color: #323232;
+    margin-top: 30px;
+}
+
+.subtitle {
+    text-align: center;
+    font-size: 18px;
+    color: #6E6E6E;
+    margin-top: -10px;
+}
+
+/* Sidebar */
+.sidebar-title {
+    font-size: 28px;
+    font-family: 'Playfair Display', serif;
+    margin-bottom: -10px;
+}
+
+.sidebar-sub {
+    font-size: 14px;
+    color: #777;
+    margin-top: 0px;
+}
+
+/* Button styling */
+button, .stButton>button {
+    background-color: #F7F6F2 !important;
+    border: 1px solid #C1A36E !important;
+    color: #323232 !important;
+    padding: 10px 5px;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #f0ece3 !important;
+    border-color: #b2905d !important;
+    transform: translateY(-2px);
+}
+
+/* Card styling */
+.card {
+    background: #FFFFFF;
+    border: 1px solid #E7E7E7;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.album-placeholder {
+    width: 70px;
+    height: 70px;
+    background: #DDD;
+    border-radius: 8px;
+}
+
+.song-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #323232;
+}
+
+.song-artist {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.listen-btn {
+    background-color: transparent;
+    border: 1px solid #C1A36E;
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: #C1A36E;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.listen-btn:hover {
+    background-color: #F2ECE1;
+}
+
+/* Section Title */
+.section-title {
+    font-size: 26px;
+    font-family: 'Playfair Display', serif;
+    color: #323232;
+    margin-top: 30px;
+}
