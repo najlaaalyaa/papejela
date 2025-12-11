@@ -2,12 +2,6 @@ import streamlit as st
 import time
 import random
 
-try:
-    import google.generativeai as genai
-except ImportError:
-    st.error("Missing required package: google-generativeai. Please install it via pip or add to requirements.txt.")
-    st.stop()
-
 # Page config
 st.set_page_config(
     page_title="VibeChecker",
@@ -17,11 +11,8 @@ st.set_page_config(
 
 # Load custom CSS
 # Ensure you have a style.css file in the same directory
-try:
-    with open("style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-except FileNotFoundError:
-    st.warning("style.css not found. Skipping custom styles.")
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # Floating icons
 st.markdown("""
@@ -73,53 +64,46 @@ st.write("")
 # Text Input Mood
 user_mood = st.text_input(" ", placeholder="Type your mood here…")
 
-# ---- Recommendation Logic ----
-def get_recommendations(mood):
-    # Configure Gemini API
-    genai.configure(api_key=st.secrets["AIzaSyDWyAp3y6GsWfeQm3XSMit0UmRdQJAmJK0"])
-    model = genai.GenerativeModel('gemini-1.5-flash')  # Use the appropriate model
-    
-    # Prompt to generate song recommendations
-    prompt = f"""
-    Suggest 5 popular songs that match the mood '{mood}'. For each song, provide the title and artist in the format:
-    1. "Song Title" by Artist Name
-    2. "Song Title" by Artist Name
-    etc.
-    Make sure the suggestions are real songs and relevant to the mood.
-    """
-    
-    try:
-        response = model.generate_content(prompt)
-        suggestions = response.text.strip().split('\n')
-        
-        recs = []
-        for suggestion in suggestions:
-            if suggestion.strip():
-                # Parse the suggestion (e.g., "1. "Song Title" by Artist Name")
-                parts = suggestion.split(' by ', 1)
-                if len(parts) == 2:
-                    title = parts[0].strip().lstrip('0123456789. ').strip('"')
-                    artist = parts[1].strip()
-                    # Create a YouTube search link
-                    search_query = f"{title} {artist}".replace(' ', '+')
-                    link = f"https://www.youtube.com/results?search_query={search_query}"
-                    recs.append((title, artist, link))
-        return recs[:5]  # Limit to 5
-    except Exception as e:
-        st.error(f"Error generating recommendations: {e}")
-        # Fallback to a default set
-        return [
-            ("Default Song 1", "Default Artist", "https://www.youtube.com/results?search_query=Default+Song+1+Default+Artist"),
-            ("Default Song 2", "Default Artist", "https://www.youtube.com/results?search_query=Default+Song+2+Default+Artist"),
-            ("Default Song 3", "Default Artist", "https://www.youtube.com/results?search_query=Default+Song+3+Default+Artist")
-        ]
+# ---- Recommendation Data (Real Songs) ----
+# Format: (Title, Artist/Channel, YouTube URL)
+mood_data = {
+    "Energetic": [
+        ("Houdini", "Dua Lipa", "https://www.youtube.com/watch?v=suAR1PYFNYA"),
+        ("Espresso", "Sabrina Carpenter", "https://www.youtube.com/watch?v=51zjlMhdSTE"),
+        ("2024 Hits Mashup", "Logan Alexandra", "https://www.youtube.com/watch?v=29zyVX_iyHc")
+    ],
+    "Melancholy": [
+        ("What Was I Made For?", "Billie Eilish", "https://www.youtube.com/watch?v=cW8VLC9nnTo"),
+        ("Sad Songs Playlist", "Love Letter", "https://www.youtube.com/watch?v=mh2265QqV-Y"),
+        ("Vampire (Official)", "Olivia Rodrigo", "https://www.youtube.com/watch?v=RlPNh_9IK0M")
+    ],
+    "Chill": [
+        ("Good Days", "SZA", "https://www.youtube.com/watch?v=2p3zZoraK9g"),
+        ("Tadow", "Masego & FKJ", "https://www.youtube.com/watch?v=hC8CH0Z3L54"),
+        ("Lofi Pop 2024", "Hi-lofi", "https://www.youtube.com/watch?v=_sT0akYdxDQ")
+    ],
+    "Heartbroken": [
+        ("you broke me first", "Tate McRae", "https://www.youtube.com/watch?v=QXzC2eiHBG8"),
+        ("Residuals", "Chris Brown", "https://www.youtube.com/watch?v=46p-IxAVJ74"),
+        ("Someone You Loved", "Lewis Capaldi", "https://www.youtube.com/watch?v=bCuhuePlP8o")
+    ]
+}
 
+# ---- Recommendation Logic ----
 def show_recs(mood):
-    recs = get_recommendations(mood)
+    # Normalize mood string for dictionary lookup
+    mood_key = mood.title() if mood.title() in mood_data else "Chill"  # Default to Chill if unknown
     
+    # Specific override for user text input if it matches our keys
+    if mood.title() in mood_data:
+        recs = mood_data[mood.title()]
+    else:
+        # Fallback/Generic for custom text inputs
+        recs = mood_data["Chill"] 
+
     # Loading animation
     with st.spinner(f"Curating {mood} vibes… 🎶"):
-        time.sleep(1.0)  # Slightly faster
+        time.sleep(1.0) # Slightly faster
 
     st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
 
@@ -134,7 +118,7 @@ def show_recs(mood):
                 <div class='card-right'>
                     <div class='song-title'>{title}</div>
                     <div class='song-artist'>{artist}</div>
-                    <a href='{link}' target='_blank' class='listen-btn'>Search on YouTube</a>
+                    <a href='{link}' target='_blank' class='listen-btn'>Listen on YouTube</a>
                 </div>
             </div>
             """,
@@ -162,9 +146,12 @@ elif chill:
 elif heartbroken:
     show_recs("Heartbroken")
 elif surprise_me:
-    # Pick a random mood from a list
-    random_mood = random.choice(["Energetic", "Melancholy", "Chill", "Heartbroken", "Happy", "Sad"])
+    # Pick a random mood from the keys
+    random_mood = random.choice(list(mood_data.keys()))
     show_recs(random_mood)
 elif user_mood:
-    # For custom moods, generate recommendations
+    # If the user types a mood we know, show it. Otherwise defaults to Chill logic above.
+    # You could expand this with an API call in a real app!
     show_recs(user_mood)
+
+
