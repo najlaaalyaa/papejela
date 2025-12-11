@@ -1,7 +1,13 @@
 import streamlit as st
 import time
+import google.generativeai as genai
 
-# Page config
+# ========= API CONFIG =========
+api_key = "AIzaSyBxMqAMs-26dIn699aG6IsUVMZxsoqIW2o"
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+# ========= STREAMLIT PAGE CONFIG =========
 st.set_page_config(
     page_title="VibeChecker",
     page_icon="🎵",
@@ -62,22 +68,69 @@ st.write("")
 # Text Input Mood
 user_mood = st.text_input(" ", placeholder="Type your mood here…")
 
-# ---- Recommendation Logic ----
+# ========= AI MUSIC GENERATOR =========
+def generate_dynamic_playlist(mood):
+
+    prompt = f"""
+    The user is feeling: {mood}
+
+    Recommend 5 songs in this format:
+
+    1. Song Title - Artist
+       https://www.youtube.com/results?search_query=Song+Title+Artist
+    """
+
+    try:
+        response = model.generate_content(prompt).text
+        return response
+    except:
+        return None
+
+# ========= FORMATTING AI RESULT INTO CARDS =========
 def show_recs(mood):
-    # Loading animation
+
     with st.spinner(f"Curating {mood} vibes… 🎶"):
-        time.sleep(1.5)
+        time.sleep(1.3)
+        raw_output = generate_dynamic_playlist(mood)
+
+    if not raw_output:
+        st.error("Failed to fetch recommendations.")
+        return
 
     st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
 
-    recs = [
-        ("Soft Skies", "Eden Waves", "https://youtu.be/xxxx"),
-        ("Golden Hour", "JVKE", "https://youtu.be/yxW5yuzVi8w"),
-        ("Peaceful Mind", "Calm Collective", "https://youtu.be/xxxx")
-    ]
+    # Parse AI results
+    lines = raw_output.split("\n")
+    cleaned = [l.strip() for l in lines if l.strip() != ""]
 
-    # Display recommendation cards
-    for title, artist, link in recs:
+    # Extract songs formatted like:
+    # "1. Song - Artist"
+    # "https://youtube..."
+    songs = []
+    i = 0
+    while i < len(cleaned):
+        if cleaned[i][0].isdigit() and "." in cleaned[i]:
+            try:
+                title_artist = cleaned[i].split(". ",1)[1]
+                link = cleaned[i+1]
+                songs.append((title_artist, link))
+                i += 2
+            except:
+                i += 1
+        else:
+            i += 1
+
+    # Display cards
+    for item in songs:
+        title_artist = item[0]
+        link = item[1]
+
+        try:
+            title, artist = title_artist.split(" - ", 1)
+        except:
+            title = title_artist
+            artist = "Artist"
+
         st.markdown(
             f"""
             <div class='card fade-in'>
@@ -98,14 +151,13 @@ def show_recs(mood):
     st.markdown(
         f"""
         <div class='now-playing'>
-            <span class='np-label'>Now Playing:</span> {recs[0][0]} — {recs[0][1]}
+            <span class='np-label'>Now Playing:</span> {songs[0][0]}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-
-# Trigger events
+# ========= TRIGGERS =========
 if energetic:
     show_recs("Energetic")
 elif melancholy:
@@ -114,5 +166,5 @@ elif chill:
     show_recs("Chill")
 elif heartbroken:
     show_recs("Heartbroken")
-elif user_mood:
+elif user_mood.strip() != "":
     show_recs(user_mood.title())
