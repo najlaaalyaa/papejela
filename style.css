@@ -29,20 +29,26 @@ body {
 /* Song Card */
 .card {
     display: flex;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.05);
     padding: 18px;
     border-radius: 20px;
     margin-bottom: 18px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     animation: fadein 0.7s ease-in-out;
+}
+
+.card-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .album-img-placeholder {
     width: 90px;
     height: 90px;
-    border-radius: 12px;
-    background: #444;
+    border-radius: 16px;
+    background: #3a3a3a;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -68,16 +74,20 @@ body {
 }
 
 .listen-btn {
+    display: inline-block;
     background: #8e66ff;
     padding: 6px 14px;
     color: white;
     text-decoration: none;
     border-radius: 10px;
     font-size: 14px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
 }
 
 .listen-btn:hover {
     background: #7c55e6;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
 }
 
 /* Now Playing */
@@ -112,11 +122,13 @@ body {
 }
 
 /* Floating Icons */
-.floating-icon, .floating-icon2 {
+.floating-icon,
+.floating-icon2 {
     position: fixed;
     font-size: 26px;
     opacity: 0.6;
     animation: float 3s infinite ease-in-out;
+    z-index: 999;
 }
 
 .floating-icon { top: 20px; right: 20px; }
