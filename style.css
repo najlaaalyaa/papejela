@@ -2,6 +2,7 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
+/* Title */
 .title {
     text-align: center;
     font-size: 50px;
@@ -18,12 +19,14 @@ body {
     margin-top: -10px;
 }
 
+/* Section */
 .section-title {
     font-size: 26px;
     margin-top: 20px;
     font-weight: 700;
 }
 
+/* Song Card */
 .card {
     display: flex;
     background: rgba(255,255,255,0.08);
@@ -35,11 +38,15 @@ body {
     animation: fadein 0.7s ease-in-out;
 }
 
-.album-img {
+.album-img-placeholder {
     width: 90px;
     height: 90px;
     border-radius: 12px;
-    object-fit: cover;
+    background: #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
 }
 
 .card-right {
@@ -73,6 +80,7 @@ body {
     background: #7c55e6;
 }
 
+/* Now Playing */
 .now-playing {
     margin-top: 25px;
     font-size: 18px;
@@ -101,4 +109,21 @@ body {
 
 .sidebar-sub {
     opacity: 0.7;
+}
+
+/* Floating Icons */
+.floating-icon, .floating-icon2 {
+    position: fixed;
+    font-size: 26px;
+    opacity: 0.6;
+    animation: float 3s infinite ease-in-out;
+}
+
+.floating-icon { top: 20px; right: 20px; }
+.floating-icon2 { bottom: 20px; left: 20px; }
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(8px); }
+    100% { transform: translateY(0px); }
 }
