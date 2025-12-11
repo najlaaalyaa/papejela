@@ -1,170 +1,80 @@
-import streamlit as st
-import time
-import google.generativeai as genai
+body {
+    background: linear-gradient(120deg, #ffecd2, #fcb69f, #ff9a9e, #fad0c4, #fbc2eb);
+    background-size: 400% 400%;
+    animation: pastelMove 15s ease infinite;
+    font-family: 'Poppins', sans-serif;
+}
 
-# ========= API CONFIG =========
-api_key = "AIzaSyBxMqAMs-26dIn699aG6IsUVMZxsoqIW2o"
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
+@keyframes pastelMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
-# ========= STREAMLIT PAGE CONFIG =========
-st.set_page_config(
-    page_title="VibeChecker",
-    page_icon="🎵",
-    layout="wide"
-)
+/* Card container (your chatbot box / form box) */
+.padded-box {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(15px);
+    border-radius: 18px;
+    padding: 25px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.15);
+}
 
-# Load custom CSS
-with open("style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+/* Title */
+#title {
+    font-size: 42px;
+    font-weight: 800;
+    text-align: center;
+    color: #ff7aa8;
+    text-shadow: 0 2px 5px rgba(255, 100, 150, 0.25);
+}
 
-# Floating icons
-st.markdown("""
-<div class="floating-icon">🎵</div>
-<div class="floating-icon2">✨</div>
-""", unsafe_allow_html=True)
+/* Subtitle */
+#subtitle {
+    font-size: 18px;
+    text-align: center;
+    color: #ffb3c6;
+    margin-bottom: 15px;
+}
 
-# --- Sidebar ---
-with st.sidebar:
-    st.markdown("<div class='sidebar-title'>🎧 VibeChecker</div>", unsafe_allow_html=True)
-    st.markdown("<p class='sidebar-sub'>Your elegant AI music curator.</p>", unsafe_allow_html=True)
+/* Buttons – cute pastel buttons */
+button {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    border: none !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-radius: 12px !important;
+    padding: 10px 18px !important;
+    transition: 0.25s ease;
+}
 
-    st.markdown("### How to Use")
-    st.markdown("""
-    1. Select a mood  
-    2. Let me curate  
-    3. Enjoy the playlist  
-    """)
+button:hover {
+    transform: scale(1.04);
+    box-shadow: 0 4px 18px rgba(255, 150, 170, 0.4);
+}
 
-    st.write("---")
-    st.markdown("### Past Moods")
-    st.markdown("- Melancholy\n- Chill\n- Energetic")
+/* Inputs */
+input, textarea, select {
+    background: rgba(255,255,255,0.8) !important;
+    border-radius: 10px !important;
+    border: 1px solid #ffdce5 !important;
+}
 
-    st.write("---")
-    st.button("🎲 Surprise Me")
+/* Chatbot bubble styling */
+.gradio-chatbot .message {
+    border-radius: 14px !important;
+    padding: 12px !important;
+}
 
-# --- Main Layout ---
-st.markdown("<h1 class='title'>VibeChecker</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Your Personal Mood-Based Music Curator</p>", unsafe_allow_html=True)
+.gradio-chatbot .message.user {
+    background: #ffe4ef !important;
+    color: #5c3a4d !important;
+}
 
-st.write("")
-st.write("")
+.gradio-chatbot .message.bot {
+    background: #e3f7ff !important;
+    color: #384d5c !important;
+}
 
-# Mood Buttons Row
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    energetic = st.button("⚡ Energetic", key="energetic", use_container_width=True)
-with col2:
-    melancholy = st.button("🟣 Melancholy", key="melancholy", use_container_width=True)
-with col3:
-    chill = st.button("🧘 Chill", key="chill", use_container_width=True)
-with col4:
-    heartbroken = st.button("💔 Heartbroken", key="heartbroken", use_container_width=True)
-
-st.write("")
-st.write("")
-
-# Text Input Mood
-user_mood = st.text_input(" ", placeholder="Type your mood here…")
-
-# ========= AI MUSIC GENERATOR =========
-def generate_dynamic_playlist(mood):
-
-    prompt = f"""
-    The user is feeling: {mood}
-
-    Recommend 5 songs in this format:
-
-    1. Song Title - Artist
-       https://www.youtube.com/results?search_query=Song+Title+Artist
-    """
-
-    try:
-        response = model.generate_content(prompt).text
-        return response
-    except:
-        return None
-
-# ========= FORMATTING AI RESULT INTO CARDS =========
-def show_recs(mood):
-
-    with st.spinner(f"Curating {mood} vibes… 🎶"):
-        time.sleep(1.3)
-        raw_output = generate_dynamic_playlist(mood)
-
-    if not raw_output:
-        st.error("Failed to fetch recommendations.")
-        return
-
-    st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
-
-    # Parse AI results
-    lines = raw_output.split("\n")
-    cleaned = [l.strip() for l in lines if l.strip() != ""]
-
-    # Extract songs formatted like:
-    # "1. Song - Artist"
-    # "https://youtube..."
-    songs = []
-    i = 0
-    while i < len(cleaned):
-        if cleaned[i][0].isdigit() and "." in cleaned[i]:
-            try:
-                title_artist = cleaned[i].split(". ",1)[1]
-                link = cleaned[i+1]
-                songs.append((title_artist, link))
-                i += 2
-            except:
-                i += 1
-        else:
-            i += 1
-
-    # Display cards
-    for item in songs:
-        title_artist = item[0]
-        link = item[1]
-
-        try:
-            title, artist = title_artist.split(" - ", 1)
-        except:
-            title = title_artist
-            artist = "Artist"
-
-        st.markdown(
-            f"""
-            <div class='card fade-in'>
-                <div class='card-left'>
-                    <div class='album-placeholder'></div>
-                </div>
-                <div class='card-right'>
-                    <div class='song-title'>{title}</div>
-                    <div class='song-artist'>{artist}</div>
-                    <a href='{link}' target='_blank' class='listen-btn'>Listen</a>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # Now playing bar
-    st.markdown(
-        f"""
-        <div class='now-playing'>
-            <span class='np-label'>Now Playing:</span> {songs[0][0]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# ========= TRIGGERS =========
-if energetic:
-    show_recs("Energetic")
-elif melancholy:
-    show_recs("Melancholy")
-elif chill:
-    show_recs("Chill")
-elif heartbroken:
-    show_recs("Heartbroken")
-elif user_mood.strip() != "":
-    show_recs(user_mood.title())
+/* Footer hide (optional) */
+footer { display: none !important; }
