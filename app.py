@@ -1,11 +1,6 @@
 import streamlit as st
 import time
 
-# ========= API CONFIG =========
-api_key = "AIzaSyBxMqAMs-26dIn699aG6IsUVMZxsoqIW2o"
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
-
 # ========= STREAMLIT PAGE CONFIG =========
 st.set_page_config(
     page_title="VibeChecker",
