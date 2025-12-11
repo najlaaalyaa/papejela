@@ -80,7 +80,7 @@ st.markdown("""
 
 # --- 4. API SETUP ---
 try:
-    api_key = st.secrets["GOOGLE_API_KEY"]
+    api_key = st.secrets["AIzaSyBxMqAMs-26dIn699aG6IsUVMZxsoqIW2o"]
 except:
     st.error("⚠️ API Key missing! Check your Secrets.")
     st.stop()
