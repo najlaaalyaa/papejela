@@ -1,158 +1,98 @@
 import streamlit as st
 import time
-import google.generativeai as genai
-import base64
-from io import BytesIO
-import random
+import os
 
-# ------------------------------
-# GEMINI SETUP
-# ------------------------------
-genai.configure(api_key="AIzaSyDWyAp3y6GsWfeQm3XSMit0UmRdQJAmJK0")
+# Try to import Gemini SDK with safe fallback
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ModuleNotFoundError:
+    GEMINI_AVAILABLE = False
 
-text_model = genai.GenerativeModel("gemini-1.5-flash")
-vision_model = genai.GenerativeModel("gemini-1.5-pro")
+# ----------------------------
+# Streamlit Page Config
+# ----------------------------
+st.set_page_config(
+    page_title="VibeChecker",
+    page_icon="🎵",
+    layout="wide"
+)
 
+# Load CSS if exists
+if os.path.exists("style.css"):
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ------------------------------
-# GENERATE PLAYLIST (TEXT)
-# ------------------------------
-def get_ai_playlist(mood):
+# Sidebar
+with st.sidebar:
+    st.markdown("<h2>🎧 VibeChecker</h2>", unsafe_allow_html=True)
+    st.markdown("Your elegant AI music curator.")
+
+    st.write("### How to Use")
+    st.write("Select a mood → AI generates playlist → Enjoy 🎶")
+
+    st.write("---")
+    st.write("### Surprise Me")
+    st.button("🎲 Random Mood")
+
+# ----------------------------
+# Gemini Setup
+# ----------------------------
+if GEMINI_AVAILABLE:
+    # Load key
+    GEMINI_API_KEY = st.secrets.get("AIzaSyDWyAp3y6GsWfeQm3XSMit0UmRdQJAmJK0", None)
+
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemini-pro")
+    else:
+        GEMINI_AVAILABLE = False
+else:
+    model = None
+
+# ----------------------------
+# AI Playlist Function
+# ----------------------------
+def generate_playlist(mood):
+    if not GEMINI_AVAILABLE:
+        return [
+            ("AI Not Enabled", "Please install google-generativeai", "#"),
+            ("Missing API Key", "Add GEMINI_API_KEY in Streamlit Secrets", "#")
+        ]
+
     prompt = f"""
-    Generate 5 song recommendations based on this mood: {mood}.
-    Strict format only:
-
-    Title | Artist | YouTube Link
+    Create a playlist of 6 songs based on mood: {mood}.
+    Format each line as: Title - Artist.
+    Do NOT add numbering.
     """
-
-    response = text_model.generate_content(prompt)
-    lines = response.text.split("\n")
+    
+    response = model.generate_content(prompt)
+    lines = response.text.strip().split("\n")
 
     playlist = []
     for line in lines:
-        if "|" in line:
-            parts = [p.strip() for p in line.split("|")]
-            if len(parts) == 3:
-                playlist.append((parts[0], parts[1], parts[2]))
+        if "-" in line:
+            title, artist = line.split("-", 1)
+            playlist.append((title.strip(), artist.strip(), "#"))
 
-    return playlist
+    return playlist[:6]
 
-
-# ------------------------------
-# GENERATE ALBUM ART (AI IMAGE)
-# ------------------------------
-def generate_album_art(title, artist, mood):
-    prompt = f"""
-    Generate an aesthetic square album cover in high quality based on this song:
-
-    Title: {title}
-    Artist: {artist}
-    Mood theme: {mood}
-
-    Style: cinematic, soft lighting, gradient glow, clean minimalistic aesthetic.
-    No text on the image.
-    """
-
-    img = vision_model.generate_content(prompt, stream=False)
-    image_bytes = img._result.candidates[0].content.parts[0].inline_data.data
-    return image_bytes
-
-
-def image_to_base64(image_bytes):
-    return base64.b64encode(image_bytes).decode("utf-8")
-
-
-# ------------------------------
-# STREAMLIT PAGE CONFIG
-# ------------------------------
-st.set_page_config(page_title="VibeChecker", page_icon="🎵", layout="wide")
-
-# Load CSS
-with open("style.css", "r") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-
-# ------------------------------
-# SIDEBAR
-# ------------------------------
-with st.sidebar:
-    st.markdown("<div class='sidebar-title'>🎧 VibeChecker</div>", unsafe_allow_html=True)
-    st.markdown("<p class='sidebar-sub'>Your elegant AI music curator.</p>", unsafe_allow_html=True)
-
-    st.markdown("### How to Use")
-    st.markdown("""
-    1. Select a mood  
-    2. AI generates playlist  
-    3. Enjoy the music  
-    """)
-
-    st.write("---")
-    st.markdown("### Past Moods")
-    st.markdown("- Melancholy\n- Chill\n- Energetic")
-
-    st.write("---")
-
-    # Surprise Me
-    surprise = st.button("🎲 Surprise Me")
-    if surprise:
-        mood = random.choice(["Energetic", "Melancholy", "Chill", "Heartbroken", "Romantic", "Nostalgic", "Soft", "Dark"])
-        st.session_state["surprise_mood"] = mood
-    else:
-        st.session_state["surprise_mood"] = None
-
-
-# ------------------------------
-# TITLE
-# ------------------------------
-st.markdown("<h1 class='title'>VibeChecker</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Your Personal Mood-Based Music Curator</p>", unsafe_allow_html=True)
-
-st.write("")
-st.write("")
-
-
-# ------------------------------
-# MOOD BUTTONS
-# ------------------------------
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    energetic = st.button("⚡ Energetic", use_container_width=True)
-with col2:
-    melancholy = st.button("🟣 Melancholy", use_container_width=True)
-with col3:
-    chill = st.button("🧘 Chill", use_container_width=True)
-with col4:
-    heartbroken = st.button("💔 Heartbroken", use_container_width=True)
-
-st.write("")
-st.write("")
-
-# Mood input
-user_mood = st.text_input(" ", placeholder="Type your mood here…")
-
-
-# ------------------------------
-# SHOW RECOMMENDATIONS
-# ------------------------------
-def show_recs(mood):
+# ----------------------------
+# Show playlist cards
+# ----------------------------
+def display_playlist(mood):
     with st.spinner(f"Curating {mood} vibes… 🎶"):
         time.sleep(1.2)
-        playlist = get_ai_playlist(mood)
+        tracks = generate_playlist(mood)
 
-    st.markdown(f"<h2 class='section-title'>Recommended for {mood}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2>Recommended for {mood}</h2>", unsafe_allow_html=True)
 
-    for title, artist, link in playlist:
-
-        # Generate AI album art
-        img_bytes = generate_album_art(title, artist, mood)
-        b64_img = image_to_base64(img_bytes)
-
+    for title, artist, link in tracks:
         st.markdown(
             f"""
-            <div class='card fade-in'>
+            <div class='card'>
                 <div class='card-left'>
-                    <img src="data:image/png;base64,{b64_img}" class="album-img"/>
+                    <div class='album-placeholder'></div>
                 </div>
                 <div class='card-right'>
                     <div class='song-title'>{title}</div>
@@ -164,30 +104,32 @@ def show_recs(mood):
             unsafe_allow_html=True
         )
 
-    # Now Playing bar
-    if playlist:
-        st.markdown(
-            f"""
-            <div class='now-playing'>
-                <span class='np-label'>Now Playing:</span> {playlist[0][0]} — {playlist[0][1]}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+# ----------------------------
+# UI Buttons
+# ----------------------------
+st.title("VibeChecker 🎵")
+st.subheader("Your Mood-Based AI Music Curator")
 
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    energetic = st.button("⚡ Energetic")
+with col2:
+    melancholy = st.button("🟣 Melancholy")
+with col3:
+    chill = st.button("🧘 Chill")
+with col4:
+    heartbroken = st.button("💔 Heartbroken")
 
-# ------------------------------
-# TRIGGERS
-# ------------------------------
+user_mood = st.text_input("", placeholder="Type your mood…")
+
+# Trigger
 if energetic:
-    show_recs("Energetic")
+    display_playlist("Energetic")
 elif melancholy:
-    show_recs("Melancholy")
+    display_playlist("Melancholy")
 elif chill:
-    show_recs("Chill")
+    display_playlist("Chill")
 elif heartbroken:
-    show_recs("Heartbroken")
+    display_playlist("Heartbroken")
 elif user_mood:
-    show_recs(user_mood.title())
-elif st.session_state.get("surprise_mood"):
-    show_recs(st.session_state["surprise_mood"])
+    display_playlist(user_mood.title())
