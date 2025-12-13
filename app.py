@@ -99,6 +99,9 @@ if 'playlist' not in st.session_state: st.session_state.playlist = None
 if 'error_debug' not in st.session_state: st.session_state.error_debug = None
 if 'current_mood' not in st.session_state: st.session_state.current_mood = ""
 if 'questions_asked' not in st.session_state: st.session_state.questions_asked = False
+if 'q1' not in st.session_state: st.session_state.q1 = "Neutral"  # Default value
+if 'q2' not in st.session_state: st.session_state.q2 = "Relaxed"  # Default value
+if 'q3' not in st.session_state: st.session_state.q3 = "Calm"  # Default value
 
 # --- 6. THE BRAIN (ROBUST VERSION) ---
 def get_vibe_check(mood):
@@ -184,11 +187,18 @@ if b4: target_mood = "Heartbroken"
 if st.button("🤔 Not Sure How I Feel") and not st.session_state.questions_asked:
     st.session_state.questions_asked = True
 
-    # Display questions and get responses
-    q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"])
-    q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"])
-    q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"])
+# Display questions with default values
+q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"], index=["Energetic", "Tired", "Neutral", "Weak"].index(st.session_state.q1))
+q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"], index=["Happy", "Sad", "Anxious", "Relaxed"].index(st.session_state.q2))
+q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"], index=["Focused", "Distracted", "Overwhelmed", "Calm"].index(st.session_state.q3))
 
+# Save selected values to session state for next time
+st.session_state.q1 = q1
+st.session_state.q2 = q2
+st.session_state.q3 = q3
+
+# Trigger mood analysis after all questions are answered
+if st.button("Analyze Mood"):
     # Logic to determine mood based on responses
     if "Energetic" in q1 and "Happy" in q2 and "Focused" in q3:
         target_mood = "Energetic"
@@ -210,28 +220,6 @@ if st.button("🤔 Not Sure How I Feel") and not st.session_state.questions_aske
         else:
             st.session_state.error_debug = result
     st.rerun()
-
-# Text Input Logic (User can type their mood)
-user_input = st.text_input("", placeholder="Or type your exact mood here...")
-if user_input and user_input != st.session_state.current_mood:
-    target_mood = user_input
-
-# EXECUTION
-if target_mood:
-    st.session_state.current_mood = target_mood
-    st.session_state.playlist = None  # Clear old
-    st.session_state.error_debug = None
-    
-    with st.spinner(f"Analyzing {target_mood}..."):
-        result = get_vibe_check(target_mood)
-        
-        if isinstance(result, list):
-            if len(result) > 0 and 'error' in result[0]:
-                st.session_state.error_debug = "🚫 That doesn't look like a valid mood!"
-            else:
-                st.session_state.playlist = result
-        else:
-            st.session_state.error_debug = result
 
 # --- 9. DISPLAY RESULTS ---
 
