@@ -101,7 +101,6 @@ if 'current_mood' not in st.session_state: st.session_state.current_mood = ""
 
 # --- 6. THE BRAIN (ROBUST VERSION) ---
 def get_vibe_check(mood):
-    # Try the most standard model alias first
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
     headers = {'Content-Type': 'application/json'}
     
@@ -118,15 +117,12 @@ def get_vibe_check(mood):
     try:
         response = requests.post(url, headers=headers, json=data)
         
-        # 1. Catch HTTP Errors (404, 400, 500)
         if response.status_code != 200:
             return f"Error {response.status_code}: {response.text}"
             
-        # 2. Parse Response
         try:
             text = response.json()['candidates'][0]['content']['parts'][0]['text']
             
-            # 3. Robust JSON Extraction (Finds the list [...] inside text)
             match = re.search(r"\[.*\]", text, re.DOTALL)
             if match:
                 clean_json = match.group(0)
@@ -148,7 +144,7 @@ with st.sidebar:
     if st.button("🎲 Surprise Me"):
         vibe = random.choice(["Energetic", "Chill", "Melancholy", "Dreamy"])
         st.session_state.current_mood = vibe
-        st.session_state.playlist = None # Clear old
+        st.session_state.playlist = None  # Clear old
         st.session_state.error_debug = None
         
         with st.spinner(f"Curating {vibe}..."):
@@ -163,6 +159,37 @@ with st.sidebar:
         st.session_state.playlist = None
         st.session_state.current_mood = ""
         st.session_state.error_debug = None
+        st.rerun()
+
+    # --- New Button for Mood Discovery ---
+    if st.button("🤔 Not Sure How I Feel"):
+        st.session_state.current_mood = ""  # Clear current mood
+
+        # Display questions and get responses
+        q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"])
+        q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"])
+        q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"])
+
+        # Logic to determine mood based on responses
+        if "Energetic" in q1 and "Happy" in q2 and "Focused" in q3:
+            target_mood = "Energetic"
+        elif "Tired" in q1 and "Sad" in q2:
+            target_mood = "Melancholy"
+        elif "Relaxed" in q2 and "Calm" in q3:
+            target_mood = "Chill"
+        else:
+            target_mood = "Neutral"
+
+        st.session_state.current_mood = target_mood
+        st.session_state.playlist = None  # Clear old
+        st.session_state.error_debug = None
+
+        with st.spinner(f"Analyzing mood: {target_mood}..."):
+            result = get_vibe_check(target_mood)
+            if isinstance(result, list):
+                st.session_state.playlist = result
+            else:
+                st.session_state.error_debug = result
         st.rerun()
 
 # --- 8. MAIN UI ---
@@ -189,20 +216,17 @@ if user_input and user_input != st.session_state.current_mood:
 # EXECUTION
 if target_mood:
     st.session_state.current_mood = target_mood
-    st.session_state.playlist = None # Clear old
+    st.session_state.playlist = None  # Clear old
     st.session_state.error_debug = None
     
     with st.spinner(f"Analyzing {target_mood}..."):
         result = get_vibe_check(target_mood)
         
-        # If it's a List, it's a Playlist!
         if isinstance(result, list):
-            # Check for logic error (gibberish)
             if len(result) > 0 and 'error' in result[0]:
                 st.session_state.error_debug = "🚫 That doesn't look like a valid mood!"
             else:
                 st.session_state.playlist = result
-        # If it's a String, it's an Error Message!
         else:
             st.session_state.error_debug = result
 
@@ -230,4 +254,3 @@ if st.session_state.playlist:
             <a href="{song.get('link','https://www.youtube.com')}" target="_blank" class="listen-btn">▶ Listen</a>
         </div>
         """, unsafe_allow_html=True)
-
