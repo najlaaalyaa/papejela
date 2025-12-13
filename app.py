@@ -181,10 +181,18 @@ not_sure_button = st.button("🤔 Not Sure How I Feel")
 
 # Button Logic for Mood Selection
 target_mood = None
-if b1: target_mood = "Energetic"
-if b2: target_mood = "Melancholy"
-if b3: target_mood = "Chill"
-if b4: target_mood = "Heartbroken"
+if b1: 
+    target_mood = "Energetic"
+    st.session_state.current_mood = target_mood  # Update the mood state
+if b2: 
+    target_mood = "Melancholy"
+    st.session_state.current_mood = target_mood
+if b3: 
+    target_mood = "Chill"
+    st.session_state.current_mood = target_mood
+if b4: 
+    target_mood = "Heartbroken"
+    st.session_state.current_mood = target_mood
 
 # "Not Sure How I Feel" - Trigger Questions Logic
 if not_sure_button and not st.session_state.questions_asked:
