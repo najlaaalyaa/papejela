@@ -176,15 +176,18 @@ b2 = c2.button("☂️ Melancholy")
 b3 = c3.button("🧘 Chill")
 b4 = c4.button("💔 Heartbroken")
 
-# Button Logic
+# "Not Sure How I Feel" Button (Main UI)
+not_sure_button = st.button("🤔 Not Sure How I Feel")
+
+# Button Logic for Mood Selection
 target_mood = None
 if b1: target_mood = "Energetic"
 if b2: target_mood = "Melancholy"
 if b3: target_mood = "Chill"
 if b4: target_mood = "Heartbroken"
 
-# "Not Sure How I Feel" Button (Main UI)
-if st.button("🤔 Not Sure How I Feel") and not st.session_state.questions_asked:
+# "Not Sure How I Feel" - Trigger Questions Logic
+if not_sure_button and not st.session_state.questions_asked:
     st.session_state.questions_asked = True
 
 # Display questions only after button is clicked
