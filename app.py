@@ -204,9 +204,7 @@ st.markdown(
             that suggests songs based on your current mood.
         </p>
         <p style="font-size:16px;">
-            Simply type how you feel — whether it's a single word like
-            <em>sad</em>, <em>chill</em>, <em>melancholy</em>,
-            or a short sentence — and VibeChecker will curate a playlist
+            Simply type how you feel and VibeChecker will curate a playlist
             that matches your vibe.
         </p>
     </div>
