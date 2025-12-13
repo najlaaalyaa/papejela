@@ -209,9 +209,6 @@ st.markdown(
             or a short sentence — and VibeChecker will curate a playlist
             that matches your vibe.
         </p>
-        <p style="font-size:15px; opacity:0.9;">
-            🎧 Powered by Generative AI • Mood-based recommendations • Instant results
-        </p>
     </div>
     """,
     unsafe_allow_html=True
