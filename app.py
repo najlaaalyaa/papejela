@@ -136,65 +136,10 @@ def get_vibe_check(mood):
     except Exception as e:
         return f"Connection Error: {str(e)}"
 
-# --- 7. SIDEBAR ---
-with st.sidebar:
-    st.title("🎧 Control Panel")
-    st.info("VibeChecker AI")
-    
-    if st.button("🎲 Surprise Me"):
-        vibe = random.choice(["Energetic", "Chill", "Melancholy", "Dreamy"])
-        st.session_state.current_mood = vibe
-        st.session_state.playlist = None  # Clear old
-        st.session_state.error_debug = None
-        
-        with st.spinner(f"Curating {vibe}..."):
-            result = get_vibe_check(vibe)
-            if isinstance(result, list):
-                st.session_state.playlist = result
-            else:
-                st.session_state.error_debug = result
-        st.rerun()
-
-    if st.button("🔄 Reset App"):
-        st.session_state.playlist = None
-        st.session_state.current_mood = ""
-        st.session_state.error_debug = None
-        st.rerun()
-
-    # --- New Button for Mood Discovery ---
-    if st.button("🤔 Not Sure How I Feel"):
-        st.session_state.current_mood = ""  # Clear current mood
-
-        # Display questions and get responses
-        q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"])
-        q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"])
-        q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"])
-
-        # Logic to determine mood based on responses
-        if "Energetic" in q1 and "Happy" in q2 and "Focused" in q3:
-            target_mood = "Energetic"
-        elif "Tired" in q1 and "Sad" in q2:
-            target_mood = "Melancholy"
-        elif "Relaxed" in q2 and "Calm" in q3:
-            target_mood = "Chill"
-        else:
-            target_mood = "Neutral"
-
-        st.session_state.current_mood = target_mood
-        st.session_state.playlist = None  # Clear old
-        st.session_state.error_debug = None
-
-        with st.spinner(f"Analyzing mood: {target_mood}..."):
-            result = get_vibe_check(target_mood)
-            if isinstance(result, list):
-                st.session_state.playlist = result
-            else:
-                st.session_state.error_debug = result
-        st.rerun()
-
-# --- 8. MAIN UI ---
+# --- 7. MAIN UI ---
 st.markdown('<p class="title-text">🎵 VibeChecker</p>', unsafe_allow_html=True)
 
+# Mood Selection Buttons
 c1, c2, c3, c4 = st.columns(4)
 b1 = c1.button("⚡ Energetic")
 b2 = c2.button("☂️ Melancholy")
@@ -208,7 +153,38 @@ if b2: target_mood = "Melancholy"
 if b3: target_mood = "Chill"
 if b4: target_mood = "Heartbroken"
 
-# Text Logic
+# "Not Sure How I Feel" Button
+if st.button("🤔 Not Sure How I Feel"):
+    st.session_state.current_mood = ""  # Clear current mood
+
+    # Display questions and get responses
+    q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"])
+    q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"])
+    q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"])
+
+    # Logic to determine mood based on responses
+    if "Energetic" in q1 and "Happy" in q2 and "Focused" in q3:
+        target_mood = "Energetic"
+    elif "Tired" in q1 and "Sad" in q2:
+        target_mood = "Melancholy"
+    elif "Relaxed" in q2 and "Calm" in q3:
+        target_mood = "Chill"
+    else:
+        target_mood = "Neutral"
+
+    st.session_state.current_mood = target_mood
+    st.session_state.playlist = None  # Clear old
+    st.session_state.error_debug = None
+
+    with st.spinner(f"Analyzing mood: {target_mood}..."):
+        result = get_vibe_check(target_mood)
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+    st.rerun()
+
+# Text Input Logic (User can type their mood)
 user_input = st.text_input("", placeholder="Or type your exact mood here...")
 if user_input and user_input != st.session_state.current_mood:
     target_mood = user_input
@@ -230,7 +206,7 @@ if target_mood:
         else:
             st.session_state.error_debug = result
 
-# --- 9. DISPLAY RESULTS ---
+# --- 8. DISPLAY RESULTS ---
 
 # Show Error (if any)
 if st.session_state.error_debug:
