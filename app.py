@@ -136,7 +136,32 @@ def get_vibe_check(mood):
     except Exception as e:
         return f"Connection Error: {str(e)}"
 
-# --- 7. MAIN UI ---
+# --- 7. SIDEBAR ---
+with st.sidebar:
+    st.title("🎧 Control Panel")
+    st.info("VibeChecker AI")
+    
+    if st.button("🎲 Surprise Me"):
+        vibe = random.choice(["Energetic", "Chill", "Melancholy", "Dreamy"])
+        st.session_state.current_mood = vibe
+        st.session_state.playlist = None  # Clear old
+        st.session_state.error_debug = None
+        
+        with st.spinner(f"Curating {vibe}..."):
+            result = get_vibe_check(vibe)
+            if isinstance(result, list):
+                st.session_state.playlist = result
+            else:
+                st.session_state.error_debug = result
+        st.rerun()
+
+    if st.button("🔄 Reset App"):
+        st.session_state.playlist = None
+        st.session_state.current_mood = ""
+        st.session_state.error_debug = None
+        st.rerun()
+
+# --- 8. MAIN UI ---
 st.markdown('<p class="title-text">🎵 VibeChecker</p>', unsafe_allow_html=True)
 
 # Mood Selection Buttons
@@ -153,7 +178,7 @@ if b2: target_mood = "Melancholy"
 if b3: target_mood = "Chill"
 if b4: target_mood = "Heartbroken"
 
-# "Not Sure How I Feel" Button
+# "Not Sure How I Feel" Button (Main UI)
 if st.button("🤔 Not Sure How I Feel"):
     st.session_state.current_mood = ""  # Clear current mood
 
@@ -206,7 +231,7 @@ if target_mood:
         else:
             st.session_state.error_debug = result
 
-# --- 8. DISPLAY RESULTS ---
+# --- 9. DISPLAY RESULTS ---
 
 # Show Error (if any)
 if st.session_state.error_debug:
