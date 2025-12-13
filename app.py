@@ -193,6 +193,24 @@ if st.session_state.questions_asked:
     q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"], index=["Happy", "Sad", "Anxious", "Relaxed"].index(st.session_state.q2))
     q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"], index=["Focused", "Distracted", "Overwhelmed", "Calm"].index(st.session_state.q3))
 
+    # Allow users to type their own feeling
+    user_input = st.text_input("Or type how you feel here:")
+
+    # If the user types a feeling, we will override the selection
+    if user_input:
+        target_mood = user_input
+        st.session_state.current_mood = target_mood
+        st.session_state.playlist = None  # Clear old
+        st.session_state.error_debug = None
+
+        with st.spinner(f"Analyzing mood: {target_mood}..."):
+            result = get_vibe_check(target_mood)
+            if isinstance(result, list):
+                st.session_state.playlist = result
+            else:
+                st.session_state.error_debug = result
+        st.rerun()
+
     # Save selected values to session state for next time
     st.session_state.q1 = q1
     st.session_state.q2 = q2
