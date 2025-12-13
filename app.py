@@ -118,6 +118,8 @@ def get_vibe_check(mood):
     
     data = {"contents": [{"parts": [{"text": prompt}]}]}
     
+    data = {"contents": [{"parts": [{"text": prompt}]}]}
+    
     try:
         response = requests.post(url, headers=headers, json=data)
         
@@ -130,15 +132,18 @@ def get_vibe_check(mood):
             match = re.search(r"\[.*\]", text, re.DOTALL)
             if match:
                 clean_json = match.group(0)
+                # Check if the response contains the 'invalid' error (gibberish)
+                if "invalid" in clean_json:
+                    return [{'error': 'invalid'}]
                 return json.loads(clean_json)
             else:
-                return "Error: Could not find JSON data in response."
+                return [{'error': 'invalid'}]  # Return invalid if no valid JSON found
                 
         except Exception as e:
-            return f"Parsing Error: {str(e)}"
+            return [{'error': 'invalid'}]  # Return invalid if an error occurs during parsing
             
     except Exception as e:
-        return f"Connection Error: {str(e)}"
+        return [{'error': 'invalid'}]  # Return invalid if a connection error occurs
 
 # --- 7. SIDEBAR ---
 with st.sidebar:
