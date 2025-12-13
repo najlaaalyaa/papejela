@@ -233,7 +233,24 @@ if st.session_state.questions_asked:
                 st.session_state.error_debug = result
         st.rerun()
 
-# --- 9. DISPLAY RESULTS ---
+# --- 9. USER INPUT FOR MOOD ---
+user_input = st.text_input("Or type your exact mood here...")
+
+if user_input:
+    st.session_state.current_mood = user_input  # Update mood with user input
+    st.session_state.playlist = None  # Clear old playlist
+    st.session_state.error_debug = None  # Clear any errors
+
+    with st.spinner(f"Analyzing mood: {user_input}..."):
+        result = get_vibe_check(user_input)
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+    st.rerun()
+
+# --- 10. DISPLAY RESULTS ---
 
 # Show Error (if any)
 if st.session_state.error_debug:
