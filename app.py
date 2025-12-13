@@ -98,6 +98,7 @@ except:
 if 'playlist' not in st.session_state: st.session_state.playlist = None
 if 'error_debug' not in st.session_state: st.session_state.error_debug = None
 if 'current_mood' not in st.session_state: st.session_state.current_mood = ""
+if 'questions_asked' not in st.session_state: st.session_state.questions_asked = False
 
 # --- 6. THE BRAIN (ROBUST VERSION) ---
 def get_vibe_check(mood):
@@ -159,6 +160,7 @@ with st.sidebar:
         st.session_state.playlist = None
         st.session_state.current_mood = ""
         st.session_state.error_debug = None
+        st.session_state.questions_asked = False
         st.rerun()
 
 # --- 8. MAIN UI ---
@@ -179,8 +181,8 @@ if b3: target_mood = "Chill"
 if b4: target_mood = "Heartbroken"
 
 # "Not Sure How I Feel" Button (Main UI)
-if st.button("🤔 Not Sure How I Feel"):
-    st.session_state.current_mood = ""  # Clear current mood
+if st.button("🤔 Not Sure How I Feel") and not st.session_state.questions_asked:
+    st.session_state.questions_asked = True
 
     # Display questions and get responses
     q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"])
