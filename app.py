@@ -209,7 +209,7 @@ def get_vibe_check(user_text):
 # ======================================================
 with st.sidebar:
     st.title("🎧 VibeChecker")
-    st.info("AI-powered mood-based music")
+    st.info("VibeChecker AI")
 
     if st.button("🔄 Reset"):
         st.session_state.playlist = None
