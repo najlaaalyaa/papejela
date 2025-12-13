@@ -171,7 +171,7 @@ SURPRISE_MOODS = [
 
 with st.sidebar:
     st.title("🎧 VibeChecker")
-    st.info("AI mood-based music")
+    st.info("VibeChecker AI")
 
     if st.button("🎲 Surprise Me"):
         mood = random.choice(SURPRISE_MOODS)
