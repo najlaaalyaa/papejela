@@ -180,19 +180,41 @@ b4 = c4.button("💔 Heartbroken")
 not_sure_button = st.button("🤔 Not Sure How I Feel")
 
 # Button Logic for Mood Selection
-target_mood = None
-if b1: 
-    target_mood = "Energetic"
-    st.session_state.current_mood = target_mood  # Update the mood state
-if b2: 
-    target_mood = "Melancholy"
-    st.session_state.current_mood = target_mood
-if b3: 
-    target_mood = "Chill"
-    st.session_state.current_mood = target_mood
-if b4: 
-    target_mood = "Heartbroken"
-    st.session_state.current_mood = target_mood
+if b1:
+    st.session_state.current_mood = "Energetic"
+    with st.spinner(f"Analyzing mood: Energetic..."):
+        result = get_vibe_check("Energetic")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if b2:
+    st.session_state.current_mood = "Melancholy"
+    with st.spinner(f"Analyzing mood: Melancholy..."):
+        result = get_vibe_check("Melancholy")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if b3:
+    st.session_state.current_mood = "Chill"
+    with st.spinner(f"Analyzing mood: Chill..."):
+        result = get_vibe_check("Chill")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if b4:
+    st.session_state.current_mood = "Heartbroken"
+    with st.spinner(f"Analyzing mood: Heartbroken..."):
+        result = get_vibe_check("Heartbroken")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
 
 # "Not Sure How I Feel" - Trigger Questions Logic
 if not_sure_button and not st.session_state.questions_asked:
