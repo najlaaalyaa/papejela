@@ -4,7 +4,6 @@ import json
 import base64
 import random
 import re
-import os
 
 # --- 1. SETUP PAGE ---
 st.set_page_config(page_title="VibeChecker", page_icon="🎵", layout="wide")
@@ -24,8 +23,7 @@ if img_base64:
     background_style = f"""
         <style>
         .stApp {{
-            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
-            url("data:image/jpeg;base64,{img_base64}");
+            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("data:image/jpeg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -38,89 +36,118 @@ else:
 st.markdown(background_style, unsafe_allow_html=True)
 
 st.markdown("""
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
 
-.title-text {
-    font-size: 70px; font-weight: 900; text-align: center;
-    background: -webkit-linear-gradient(45deg, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    padding-bottom: 20px;
-}
+    .title-text {
+        font-size: 70px; font-weight: 900; text-align: center;
+        background: -webkit-linear-gradient(45deg, #00d2ff, #3a7bd5);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        padding-bottom: 20px;
+    }
 
-.song-card {
-    background-color: white; border-radius: 12px; padding: 15px;
-    margin-bottom: 15px; display: flex; align-items: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
+    .song-card {
+        background-color: white; border-radius: 12px; padding: 15px;
+        margin-bottom: 15px; display: flex; align-items: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s;
+    }
+    .song-card:hover { transform: scale(1.01); }
 
-.album-art {
-    width: 60px; height: 60px; border-radius: 8px;
-    margin-right: 15px; font-size: 30px;
-    display: flex; align-items: center; justify-content: center;
-}
+    .album-art {
+        width: 60px; height: 60px; background-color: #f0f2f6; border-radius: 8px;
+        margin-right: 15px; flex-shrink: 0; display: flex;
+        align-items: center; justify-content: center; font-size: 30px;
+    }
 
-.song-info { flex-grow: 1; color: #333; margin-right: 15px; }
-.song-title { font-size: 18px; font-weight: 800; color: #000; }
-.song-artist { font-size: 14px; font-weight: 600; color: #555; }
+    .song-info { flex-grow: 1; color: #333; margin-right: 15px; }
+    .song-title { font-size: 18px; font-weight: 800; margin: 0; color: #000; line-height: 1.2; }
+    .song-artist { font-size: 14px; font-weight: 600; color: #555; margin: 2px 0 0 0; }
 
-.listen-btn {
-    background-color: white; color: #00d2ff;
-    border: 2px solid #00d2ff; padding: 5px 15px;
-    border-radius: 20px; font-weight: bold; font-size: 12px;
-}
-.listen-btn:hover { background-color: #00d2ff; color: white; }
-</style>
+    .listen-btn {
+        background-color: white; color: #00d2ff; border: 2px solid #00d2ff;
+        padding: 5px 15px; border-radius: 20px; text-decoration: none;
+        font-weight: bold; font-size: 12px; white-space: nowrap; transition: all 0.2s;
+    }
+    .listen-btn:hover { background-color: #00d2ff; color: white; }
+
+    .stButton button {
+        width: 100%; height: 50px; border-radius: 10px; font-weight: 600;
+        border: 1px solid #444; background-color: rgba(20,20,20,0.8); color: white;
+    }
+    .stButton button:hover { border-color: #00d2ff; color: #00d2ff; }
+    </style>
 """, unsafe_allow_html=True)
 
 # --- 4. API SETUP ---
-api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-if not api_key:
-    st.error("⚠️ API Key missing!")
+try:
+    if "GOOGLE_API_KEY" in st.secrets:
+        api_key = st.secrets["GOOGLE_API_KEY"]
+    else:
+        import os
+        api_key = os.environ.get("GOOGLE_API_KEY")
+
+    if not api_key:
+        st.error("⚠️ API Key missing! Check your Secrets.")
+        st.stop()
+except:
+    st.error("⚠️ Error loading API Key.")
     st.stop()
 
 # --- 5. STATE MANAGEMENT ---
 if 'playlist' not in st.session_state: st.session_state.playlist = None
 if 'error_debug' not in st.session_state: st.session_state.error_debug = None
 if 'current_mood' not in st.session_state: st.session_state.current_mood = ""
+if 'questions_asked' not in st.session_state: st.session_state.questions_asked = False
+if 'q1' not in st.session_state: st.session_state.q1 = "Neutral"
+if 'q2' not in st.session_state: st.session_state.q2 = "Relaxed"
+if 'q3' not in st.session_state: st.session_state.q3 = "Calm"
 
-# --- 6. THE BRAIN (MODIFIED ONLY LOGIC) ---
+# --- 6. THE BRAIN (FIXED) ---
 def get_vibe_check(mood):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    mood = mood.strip()[:120]
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
     headers = {'Content-Type': 'application/json'}
 
     prompt = (
-        f"User input: '{mood}'.\n\n"
-        "Determine whether this input expresses a human mood or emotion.\n"
-        "If YES, recommend 5 songs matching the vibe.\n"
-        "If NO (random letters, numbers, symbols), return invalid.\n\n"
-        "Return ONLY JSON.\n\n"
-        "VALID FORMAT:\n"
-        "[{\"title\":\"Song\",\"artist\":\"Artist\",\"link\":\"https://www.youtube.com/results?search_query=Song+Artist\"}]\n\n"
-        "INVALID FORMAT:\n"
-        "[{\"error\":\"invalid mood\"}]"
+        f"Analyze mood: '{mood}'.\n"
+        "RULES:\n"
+        "1. If gibberish, return JSON: [{'error': 'invalid'}]\n"
+        "2. Else, return ONLY a valid JSON array of exactly 5 objects.\n"
+        "Each object MUST contain: title, artist, link.\n"
+        "Do NOT include markdown, explanations, or extra text.\n"
+        "OUTPUT JSON ONLY."
     )
 
     data = {"contents": [{"parts": [{"text": prompt}]}]}
 
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=20)
+        response = requests.post(url, headers=headers, json=data)
+
+        if response.status_code != 200:
+            return f"Error {response.status_code}: {response.text}"
+
         text = response.json()['candidates'][0]['content']['parts'][0]['text']
 
+        # Try pure JSON first
+        try:
+            return json.loads(text)
+        except:
+            pass
+
+        # Fallback: extract JSON array
         match = re.search(r"\[.*\]", text, re.DOTALL)
-        if not match:
-            return "❌ Invalid AI response."
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except Exception as e:
+                return f"JSON Parse Error: {str(e)}"
 
-        parsed = json.loads(match.group(0))
-
-        if isinstance(parsed, list) and "error" in parsed[0]:
-            return "❌ Invalid mood. Please describe how you feel."
-
-        return parsed
+        return "Error: Model did not return valid JSON."
 
     except Exception as e:
-        return f"❌ Error: {str(e)}"
+        return f"Connection Error: {str(e)}"
 
 # --- 7. SIDEBAR ---
 with st.sidebar:
@@ -130,33 +157,109 @@ with st.sidebar:
     if st.button("🎲 Surprise Me"):
         vibe = random.choice(["Energetic", "Chill", "Melancholy", "Dreamy"])
         st.session_state.current_mood = vibe
-        with st.spinner("Curating vibes..."):
-            st.session_state.playlist = get_vibe_check(vibe)
+        st.session_state.playlist = None
+        st.session_state.error_debug = None
+
+        with st.spinner(f"Curating {vibe}..."):
+            result = get_vibe_check(vibe)
+            if isinstance(result, list):
+                st.session_state.playlist = result
+            else:
+                st.session_state.error_debug = result
 
     if st.button("🔄 Reset App"):
         st.session_state.playlist = None
         st.session_state.current_mood = ""
         st.session_state.error_debug = None
-        st.rerun()
+        st.session_state.questions_asked = False
 
 # --- 8. MAIN UI ---
 st.markdown('<p class="title-text">🎵 VibeChecker</p>', unsafe_allow_html=True)
 
 c1, c2, c3, c4 = st.columns(4)
-if c1.button("⚡ Energetic"): st.session_state.playlist = get_vibe_check("Energetic")
-if c2.button("☂️ Melancholy"): st.session_state.playlist = get_vibe_check("Melancholy")
-if c3.button("🧘 Chill"): st.session_state.playlist = get_vibe_check("Chill")
-if c4.button("💔 Heartbroken"): st.session_state.playlist = get_vibe_check("Heartbroken")
+b1 = c1.button("⚡ Energetic")
+b2 = c2.button("☂️ Melancholy")
+b3 = c3.button("🧘 Chill")
+b4 = c4.button("💔 Heartbroken")
 
-# --- 9. USER INPUT (ENTER + SUBMIT FIXED, LAYOUT SAME) ---
-with st.form("mood_form"):
-    user_input = st.text_input("Or type your exact mood here...")
-    submitted = st.form_submit_button("Submit")
+not_sure_button = st.button("🤔 Not Sure How I Feel")
 
-if submitted and user_input.strip():
-    st.session_state.current_mood = user_input
-    with st.spinner(f"Analyzing mood: {user_input}..."):
-        result = get_vibe_check(user_input)
+if b1:
+    st.session_state.current_mood = "Energetic"
+    with st.spinner("Analyzing mood: Energetic..."):
+        result = get_vibe_check("Energetic")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if b2:
+    st.session_state.current_mood = "Melancholy"
+    with st.spinner("Analyzing mood: Melancholy..."):
+        result = get_vibe_check("Melancholy")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if b3:
+    st.session_state.current_mood = "Chill"
+    with st.spinner("Analyzing mood: Chill..."):
+        result = get_vibe_check("Chill")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if b4:
+    st.session_state.current_mood = "Heartbroken"
+    with st.spinner("Analyzing mood: Heartbroken..."):
+        result = get_vibe_check("Heartbroken")
+        if isinstance(result, list):
+            st.session_state.playlist = result
+        else:
+            st.session_state.error_debug = result
+
+if not_sure_button and not st.session_state.questions_asked:
+    st.session_state.questions_asked = True
+
+if st.session_state.questions_asked:
+    q1 = st.selectbox("1. How do you feel physically?", ["Energetic", "Tired", "Neutral", "Weak"], index=["Energetic", "Tired", "Neutral", "Weak"].index(st.session_state.q1))
+    q2 = st.selectbox("2. How do you feel emotionally?", ["Happy", "Sad", "Anxious", "Relaxed"], index=["Happy", "Sad", "Anxious", "Relaxed"].index(st.session_state.q2))
+    q3 = st.selectbox("3. How do you feel mentally?", ["Focused", "Distracted", "Overwhelmed", "Calm"], index=["Focused", "Distracted", "Overwhelmed", "Calm"].index(st.session_state.q3))
+
+    st.session_state.q1, st.session_state.q2, st.session_state.q3 = q1, q2, q3
+
+    if st.button("Analyze Mood"):
+        if "Energetic" in q1 and "Happy" in q2 and "Focused" in q3:
+            target_mood = "Energetic"
+        elif "Tired" in q1 and "Sad" in q2:
+            target_mood = "Melancholy"
+        elif "Relaxed" in q2 and "Calm" in q3:
+            target_mood = "Chill"
+        else:
+            target_mood = "Neutral"
+
+        st.session_state.current_mood = target_mood
+        with st.spinner(f"Analyzing mood: {target_mood}..."):
+            result = get_vibe_check(target_mood)
+            if isinstance(result, list):
+                st.session_state.playlist = result
+            else:
+                st.session_state.error_debug = result
+
+# --- 9. TEXT MOOD INPUT (FIXED) ---
+user_input = st.text_input("Or type your exact mood here...")
+analyze_text = st.button("🎧 Analyze Typed Mood")
+
+if analyze_text and user_input.strip():
+    clean_input = user_input.strip()[:120]
+    st.session_state.current_mood = clean_input
+    st.session_state.playlist = None
+    st.session_state.error_debug = None
+
+    with st.spinner(f"Analyzing mood: {clean_input}..."):
+        result = get_vibe_check(clean_input)
         if isinstance(result, list):
             st.session_state.playlist = result
         else:
@@ -172,13 +275,14 @@ if st.session_state.playlist:
 
     emojis = ["🎵", "🎸", "🎹", "🎷", "🎧"]
     for song in st.session_state.playlist:
+        emo = random.choice(emojis)
         st.markdown(f"""
         <div class="song-card">
-            <div class="album-art">{random.choice(emojis)}</div>
+            <div class="album-art">{emo}</div>
             <div class="song-info">
-                <div class="song-title">{song.get('title')}</div>
-                <div class="song-artist">{song.get('artist')}</div>
+                <div class="song-title">{song.get('title','Track')}</div>
+                <div class="song-artist">{song.get('artist','Artist')}</div>
             </div>
-            <a href="{song.get('link')}" target="_blank" class="listen-btn">▶ Listen</a>
+            <a href="{song.get('link','https://www.youtube.com')}" target="_blank" class="listen-btn">▶ Listen</a>
         </div>
         """, unsafe_allow_html=True)
