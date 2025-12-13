@@ -191,7 +191,33 @@ with st.sidebar:
 # ======================================================
 # 8. MAIN UI
 # ======================================================
+# ======================================================
+# 8. MAIN UI
+# ======================================================
 st.markdown('<p class="title-text">🎵 VibeChecker</p>', unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <div style="text-align:center; max-width:800px; margin:auto; color:#dddddd;">
+        <p style="font-size:18px;">
+            <strong>VibeChecker</strong> is an AI-powered music recommendation system
+            that suggests songs based on your current mood.
+        </p>
+        <p style="font-size:16px;">
+            Simply type how you feel — whether it's a single word like
+            <em>sad</em>, <em>chill</em>, <em>melancholy</em>,
+            or a short sentence — and VibeChecker will curate a playlist
+            that matches your vibe.
+        </p>
+        <p style="font-size:15px; opacity:0.9;">
+            🎧 Powered by Generative AI • Mood-based recommendations • Instant results
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 user_input = st.text_input(
     "Type your mood (e.g. sad, chill, melancholy, calm night vibes)"
@@ -205,6 +231,7 @@ if st.button("Analyze My Mood 🎶") and user_input.strip():
         result = get_vibe_check(user_input)
         st.session_state.playlist = result if isinstance(result, list) else None
         st.session_state.error = None if isinstance(result, list) else result
+
 
 # ======================================================
 # 9. OUTPUT
