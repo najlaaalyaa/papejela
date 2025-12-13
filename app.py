@@ -125,6 +125,7 @@ def get_vibe_check(mood):
 # --- 7. SIDEBAR ---
 with st.sidebar:
     st.title("🎧 Control Panel")
+    st.info("VibeChecker AI")
 
     if st.button("🎲 Surprise Me"):
         vibe = random.choice(["Energetic", "Chill", "Melancholy", "Dreamy"])
